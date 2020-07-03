@@ -1,0 +1,41 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: backup
+  namespace: kube-system
+spec:
+  schedule: "0 0 * * *" #every day at midnight
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              # Same image as in /etc/kubernetes/manifests/etcd.yaml
+              image: k8s.gcr.io/etcd:3.4.3-0
+              env:
+                - name: ETCDCTL_API
+                  value: "3"
+              command: ["/bin/sh"]
+              args:
+                [
+                  "-c",
+                  "etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/var/lib/minikube/certs/etcd/ca.crt --cert=/var/lib/minikube/certs/etcd/server.crt --key=/var/lib/minikube/certs/etcd/server.key snapshot save /backup/etcd-snapshot-$(date +%Y-%m-%d_%H:%M:%S_%Z).db",
+                ]
+              volumeMounts:
+                - mountPath: /var/lib/minikube/certs/etcd
+                  name: etcd-certs
+                  readOnly: true
+                - mountPath: /backup
+                  name: backup
+          restartPolicy: OnFailure
+          hostNetwork: true
+          volumes:
+            - name: etcd-certs
+              hostPath:
+                path: /var/lib/minikube/certs/etcd
+                type: DirectoryOrCreate
+            - name: backup
+              hostPath:
+                path: /data/backup
+                type: DirectoryOrCreate
