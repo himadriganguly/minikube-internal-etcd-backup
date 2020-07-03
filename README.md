@@ -45,3 +45,15 @@ replace the value of **--key-file** in
 ```
 --key=[SERVER KEY FILE PATH]
 ```
+
+3. After modification of the **YAML** file create the **CronJob** using the command
+
+```
+kubectl create -f k8s-internal-etcd-cluster-backup.yaml
+```
+
+You can check the view the created **CronJob** using the command
+
+```
+kubectl get cronjob -n kube-system
+```
